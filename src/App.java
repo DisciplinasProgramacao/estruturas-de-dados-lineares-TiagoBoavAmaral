@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 public class App {
+    static Lista<Pedido> listaPedidos = new Lista<>();
 
 	/** Nome do arquivo de dados. O arquivo deve estar localizado na raiz do projeto */
     static String nomeArquivoDados;
@@ -64,6 +65,8 @@ public class App {
         System.out.println("4 - Iniciar novo pedido");
         System.out.println("5 - Fechar pedido");
         System.out.println("6 - Listar produtos dos pedidos mais recentes");
+        System.out.println("7 - Obter Faturamento");
+        System.out.println("8 - Contar Pedidos por data");
         System.out.println("0 - Sair");
         System.out.print("Digite sua opção: ");
         return Integer.parseInt(teclado.nextLine());
@@ -207,13 +210,25 @@ public class App {
      * @param pedido O pedido que deve ser finalizado.
      */
     public static void finalizarPedido(Pedido pedido) {
-    	
-    	// TODO
+    	if (pedido == null) {
+            System.out.println("Nenhum pedido iniciado!");
+            return;
+        }
+        listaPedidos.inserir(pedido, listaPedidos.tamanho());
+        System.out.println("Pedido finalizado e armazenado!");
     }
     
-    public static void listarProdutosPedidosRecentes() {
-    	
-    	// TODO
+    public static void listarProdutosPedidosRecentes() {    	
+    	if(listaPedidos.vazia()) {
+            System.out.println("Nenhum pedido cadastrado.");
+            return;
+        }
+        System.out.println("Produtos dos pedidos mais recentes:");
+        for(int i= 0; i < listaPedidos.tamanho(); i++) {
+            Pedido p = listaPedidos.obterElemento(i);
+            System.out.println(p);
+            System.out.println();
+        }
     }
     
 	public static void main(String[] args) {
@@ -236,10 +251,38 @@ public class App {
                 case 4 -> pedido = iniciarPedido();
                 case 5 -> finalizarPedido(pedido);
                 case 6 -> listarProdutosPedidosRecentes();
+                case 7 -> obterFaturamento();
+                case 8 -> contarPedidosPorData();
             }
             pausa();
         }while(opcao != 0);       
 
         teclado.close();    
     }
+    public static void obterFaturamento() {
+        double total = listaPedidos.obterSoma(p -> p.valorFinal());
+        java.text.NumberFormat nf = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("pt","BR"));
+        System.out.println("Faturamento do comércio de produtos: " + nf.format(total));
+    }
+
+    public static void contarPedidosPorData() {
+        java.util.Scanner sc = new java.util.Scanner(System.in);
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        try {
+            System.out.print("Informe a data inicial dos pedidos: ");
+            String s1 = sc.nextLine().trim();
+            java.time.LocalDate inicio = java.time.LocalDate.parse(s1, fmt);
+            System.out.print("Informe a data final dos pedidos: ");
+            String s2 = sc.nextLine().trim();
+            java.time.LocalDate fim = java.time.LocalDate.parse(s2, fmt);
+            int quantidade = listaPedidos.contar(p -> {
+                java.time.LocalDate d = p.getDataPedido();
+                return d.isAfter(inicio) && d.isBefore(fim);
+            });
+            System.out.println("Quantidade de pedidos realizados entre as datas informadas: " + quantidade);
+        } catch (Exception e) {
+            System.out.println("Formato de data inválido ou erro na leitura: " + e.getMessage());
+        }
+    }
+
 }
